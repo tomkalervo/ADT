@@ -3,13 +3,10 @@
 defmodule Heap do
   @moduledoc """
   This module provides a heap data structure. Either min-heap or max-heap can be chosen.
-  Heaps are usually of complexity Big O(log n) but that is not achiveable in functional programming languages.
-  Lists are chosen because immutabillity makes tuples Big theta(n) for all operations.
-  Lists are at least Big theta(1) for pop/1 and Big O(n) for insert/2 and delete/2.
 
   How to use: TBA
   """
-  defstruct list: nil, length: nil, fun: nil
+  defstruct vector: nil, length: nil, fun: nil
 
   def test() do
     h = new_min()
@@ -19,9 +16,48 @@ defmodule Heap do
     |> Heap.Ops.insert(2, "tva")
     |> Heap.Ops.insert(7, "sju")
     |> Heap.Ops.insert(3, "tre")
+    |> Heap.Ops.insert(6, "sex")
+    |> Heap.Ops.insert(4, "fyra")
+    |> Heap.Ops.insert(5, "fem")
 
     IO.inspect(h)
-    IO.inspect(Heap.Ops.extract(h))
+
+    {{_,res}, h} = Heap.Ops.extract(h)
+    IO.puts("extracted min and got value: #{res}")
+    IO.inspect(h)
+
+    {{_,res}, h} = Heap.Ops.extract(h)
+    IO.puts("extracted min and got value: #{res}")
+    IO.inspect(h)
+
+    {{_,res}, h} = Heap.Ops.extract(h)
+    IO.puts("extracted min and got value: #{res}")
+    IO.inspect(h)
+
+    {{_,res}, h} = Heap.Ops.extract(h)
+    IO.puts("extracted min and got value: #{res}")
+    IO.inspect(h)
+
+
+    {{_,res}, h} = Heap.Ops.extract(h)
+    IO.puts("extracted min and got value: #{res}")
+
+    {{_,res}, h} = Heap.Ops.extract(h)
+    IO.puts("extracted min and got value: #{res}")
+
+    {{_,res}, h} = Heap.Ops.extract(h)
+    IO.puts("extracted min and got value: #{res}")
+
+    {{_,res}, h} = Heap.Ops.extract(h)
+    IO.puts("extracted min and got value: #{res}")
+
+    {{_,res}, h} = Heap.Ops.extract(h)
+    IO.puts("extracted min and got value: #{res}")
+
+    {{_,res}, _} = Heap.Ops.extract(h)
+    IO.puts("extracted min and got value: #{res}")
+
+
   end
 
   @doc """
@@ -41,7 +77,7 @@ defmodule Heap do
   end
 
   defp new(fun) do
-    %Heap{list: [], length: 0, fun: fun}
+    %Heap{vector: {}, length: -1, fun: fun}
   end
 
   def is_heap?(heap) when is_map(heap) do
@@ -56,8 +92,9 @@ defmodule Heap.Ops do
   def insert(heap, key, value) when is_integer(key) do
     if is_heap?(heap) do
       i = heap.length + 1
-      list = heapify_up(heap.list, [{key, value}], i, heap.fun)
-      %Heap{list: list, length: i, fun: heap.fun}
+      v = Tuple.append(heap.vector, {key, value})
+      |> heapify_up(i,heap.fun)
+      %Heap{vector: v, length: i, fun: heap.fun}
     else
       raise "Argument not a heap: #{IO.inspect(heap)}"
     end
@@ -65,72 +102,93 @@ defmodule Heap.Ops do
 
   def extract(heap) do
     if is_heap?(heap) do
-      if heap.length > 0 do
-        [first|list] = heap.list
-        i = heap.length - 1
-        {list,[w|last]} = get_i(list, i - 1)
-        list = heapify_down([w|list ++ last],1,i,heap.fun)
-        heap =
-          %Heap{list: list, length: i, fun: heap.fun}
-        {first, heap}
+      i = heap.length
+      if i < 0 do
+        raise "Trying to extract from empty heap"
       else
-        :error
-      end
+        res = elem(heap.vector, 0)
+        tmp = elem(heap.vector, i)
+        v =
+          put_elem(heap.vector, 0, tmp)
+          |> Tuple.delete_at(i)
 
+        i = i - 1
+        v = heapify_down(v,1,i,heap.fun)
+        {res, %Heap{vector: v, length: i, fun: heap.fun}}
+      end
     else
       raise "Argument not a heap: #{IO.inspect(heap)}"
     end
   end
 
-  defp heapify_down([],_,_,_), do: []
-  defp heapify_down(heap, i, len, _) when i >= len, do: heap
-  defp heapify_down(heap, i, len, comp) do
-    {top, [{val,_} = w|bottom]} = get_i(heap, i)
-    {top_left, [{left,_} = l|bottom]} = get_i(bottom, i)
-    IO.inspect(left)
-    IO.inspect(val)
-    if comp.(left,val) do
-      # TODO: switch
-      IO.puts("left switch")
-      heap = top ++ [l|top_left] ++ [w|bottom]
-      heapify_down(heap, 2 * i, len, comp)
-    else
-      top_right = [l|top_left]
-      [{right,_} = r | bottom] = bottom
-      if comp.(right,val) do
-        # TODO: switch
-        IO.puts("right switch")
-        heap = top ++ [r|top_right] ++ [w|bottom]
-        heapify_down(heap, (2 * i) + 1, len, comp)
+  defp heapify_down({},_,_,_), do: {}
+  defp heapify_down(v, i, len, _) when i >= len, do: v
+  defp heapify_down(vector, i, len, comp) do
+    #IO.puts("heapify down with i : #{i} and vector:")
+    #IO.inspect(vector)
+    {key, val} = elem(vector, i - 1)
+    left_i = 2 * i
+    right_i = left_i + 1
+    #check if index is valid
+    if (right_i <= len) do
+      left_child = elem(vector, left_i - 1)
+      {left, _} = left_child
+      right_child = elem(vector, right_i - 1)
+      {right, _} = right_child
+      if (comp.(left,right)) do
+        # check left
+        if comp.(key,left) do
+          # all correct
+          vector
+        else
+          # swap
+          put_elem(vector, i - 1, left_child)
+          |> put_elem(left_i - 1, {key, val})
+          |> heapify_down(left_i,len,comp)
+        end
       else
-        #all is well - no switch needed
-        IO.puts("all well")
-        IO.inspect(heap)
-        heap
+        # check right
+        if comp.(key,right) do
+          # all correct
+          vector
+        else
+          # swap
+          put_elem(vector, i - 1, right_child)
+          |> put_elem(right_i - 1, {key, val})
+          |> heapify_down(right_i,len,comp)
+        end
+      end
+    else
+      if (left_i <= len) do
+        left_child = elem(vector, left_i - 1)
+        {left, _} = left_child
+        # check left
+        if comp.(key,left) do
+          # all correct
+          vector
+        else
+          # swap
+          put_elem(vector, i - 1, left_child)
+          |> put_elem(left_i - 1, {key, val})
+          |> heapify_down(left_i,len,comp)
+        end
+      else
+        vector
       end
     end
   end
 
-  defp heapify_up(heap,new,1,_), do: heap ++ new
-  defp heapify_up(heap,[{key2,_} = new|back],i,comp) do
-    {top, [{key1,_} = prev|bottom]} = Enum.split(heap, div(i,2) - 1)
+  defp heapify_up(vector,0,_), do: vector
+  defp heapify_up(vector,i,comp) do
+    {key1,val1} = elem(vector, div(i,2))
+    {key2,val2} = elem(vector, i)
     if comp.(key1,key2) do
-      heap ++ [new|back]
+      vector
     else
-      new = [new|bottom] ++ [prev|back]
-      # IO.inspect(new)
-      heapify_up(top, new, div(i,2), comp)
+      put_elem(vector, div(i,2), {key2, val2})
+      |> put_elem(i, {key1, val1})
+      |> heapify_up(div(i,2), comp)
     end
-  end
-
-  defp get_i([h|list], i) do
-    get_i(list, [h], i - 1)
-  end
-  defp get_i(list, acc, 0) do
-    {Enum.reverse(acc), list}
-  end
-  defp get_i([h|t], acc, i) do
-    get_i(t, [h|acc], i - 1)
   end
 
 end
