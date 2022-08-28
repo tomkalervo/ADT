@@ -4,12 +4,18 @@ defmodule Heap do
   @moduledoc """
   This module provides a heap data structure. Either min-heap or max-heap can be chosen.
 
-  How to use: TBA
+  functions:
+  start_min/0
+  start_max/0
+  insert/3
+  extract/1
+  find/1 - TODO
+  is_empty?/1
   """
   defstruct vector: nil, length: nil, fun: nil
 
   def test() do
-    h = new_min()
+    h = start_min()
     |> Heap.Ops.insert(9, "nio")
     |> Heap.Ops.insert(1, "ett")
     |> Heap.Ops.insert(8, "atta")
@@ -64,7 +70,7 @@ defmodule Heap do
   Returns a new min-heap.
   {%Heap, comperator}
   """
-  def new_min() do
+  def start_min() do
     new(&(&1<&2))
   end
 
@@ -72,7 +78,7 @@ defmodule Heap do
   Returns a new max-heap.
   {%Heap, comperator}
   """
-  def new_max() do
+  def start_max() do
     new(&(&1>&2))
   end
 
@@ -84,11 +90,34 @@ defmodule Heap do
     heap.__struct__ == Heap
   end
   def is_heap?(_), do: false
+
+  @doc """
+  returns true if heap is empty
+  """
+  def is_empty?(heap) do
+    heap.length < 0
+  end
+
+  @doc """
+  insert/3 takes heap, key and value as arguments.
+  insert/3 appends the key-value pair to the heap and returns this new heap.
+  """
+  def insert(h,k,v), do: Heap.Ops.insert(h,k,v)
+
+  @doc """
+  extract/1 removes and returnes the root element of the heap together with a new heap.
+  If a min-heap the value with a minimum key is returned, if a max-heap the value with a maximum key is returned(there can be several keys with the same min/max).
+  """
+  def extract(h), do: Heap.Ops.extract(h)
 end
 
 defmodule Heap.Ops do
   import Heap
 
+  @doc """
+  insert/3 takes heap, key and value as arguments.
+  insert/3 appends the key-value pair to the heap and returns this new heap.
+  """
   def insert(heap, key, value) when is_integer(key) do
     if is_heap?(heap) do
       i = heap.length + 1
@@ -100,6 +129,10 @@ defmodule Heap.Ops do
     end
   end
 
+  @doc """
+  extract/1 removes and returnes the root element of the heap together with a new heap.
+  If a min-heap the value with a minimum key is returned, if a max-heap the value with a maximum key is returned(there can be several keys with the same min/max).
+  """
   def extract(heap) do
     if is_heap?(heap) do
       i = heap.length
