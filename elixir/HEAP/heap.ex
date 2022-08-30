@@ -122,7 +122,7 @@ defmodule Heap.Ops do
     if is_heap?(heap) do
       i = heap.length + 1
       v = Tuple.append(heap.vector, {key, value})
-      |> heapify_up(i,heap.fun)
+      |> heapify_up(i + 1,heap.fun)
       %Heap{vector: v, length: i, fun: heap.fun}
     else
       raise "Argument not a heap: #{IO.inspect(heap)}"
@@ -211,15 +211,19 @@ defmodule Heap.Ops do
     end
   end
 
-  defp heapify_up(vector,0,_), do: vector
+  defp heapify_up(vector,i,_) when i < 2 do
+    vector
+  end
   defp heapify_up(vector,i,comp) do
-    {key1,val1} = elem(vector, div(i,2))
-    {key2,val2} = elem(vector, i)
+    #IO.inspect(vector)
+    #IO.puts(i)
+    {key1,val1} = elem(vector, div(i,2) - 1)
+    {key2,val2} = elem(vector, i - 1)
     if comp.(key1,key2) do
       vector
     else
-      put_elem(vector, div(i,2), {key2, val2})
-      |> put_elem(i, {key1, val1})
+      put_elem(vector, div(i,2) - 1, {key2, val2})
+      |> put_elem(i - 1, {key1, val1})
       |> heapify_up(div(i,2), comp)
     end
   end
